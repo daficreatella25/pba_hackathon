@@ -63,6 +63,22 @@ export function useViemAuctionDetails(auctionAddress: string) {
     }
   }, [publicClient, auctionAddress]);
 
+  // Auto-refresh auction details periodically for real-time updates
+  useEffect(() => {
+    if (!auctionAddress || !publicClient) return;
+
+    console.log('🔄 Setting up real-time auction details polling...');
+    const pollInterval = setInterval(() => {
+      console.log('🔄 Polling for auction detail updates...');
+      fetchAuctionDetails();
+    }, 10000); // Poll every 10 seconds for individual auction
+
+    return () => {
+      console.log('🛑 Clearing auction details polling interval');
+      clearInterval(pollInterval);
+    };
+  }, [auctionAddress, publicClient, fetchAuctionDetails]);
+
   const placeBid = async (bidAmount: string): Promise<boolean> => {
     if (!account || !walletClient) {
       throw new Error('Wallet not connected');

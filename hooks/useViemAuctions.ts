@@ -11,6 +11,7 @@ export function useViemAuctions() {
   const [auctions, setAuctions] = useState<AuctionRoom[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastRefresh, setLastRefresh] = useState<number>(0);
 
   const fetchAuctions = useCallback(async () => {
     if (!publicClient) {
@@ -91,6 +92,7 @@ export function useViemAuctions() {
 
       console.log('Processed auction data:', auctionData);
       setAuctions(auctionData);
+      setLastRefresh(Date.now());
     } catch (err) {
       console.error('Error fetching auctions:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch auctions');
@@ -168,6 +170,7 @@ export function useViemAuctions() {
         try {
           if (log.address.toLowerCase() === AUCTION_FACTORY_ADDRESS.toLowerCase()) {
             // This is from our factory contract
+            console.log('✅ Auction created successfully, refreshing list...');
             await fetchAuctions();
             return log.data; // Contains the auction address
           }
@@ -176,8 +179,9 @@ export function useViemAuctions() {
         }
       }
 
+      console.log('✅ Auction transaction completed, refreshing list...');
       await fetchAuctions(); // Refresh anyway
-      return null;
+      return receipt.transactionHash; // Return transaction hash instead
     } catch (err: any) {
       console.error('Create auction error:', err);
       
@@ -209,6 +213,7 @@ export function useViemAuctions() {
     }
   };
 
+  // Initial fetch when publicClient becomes available
   useEffect(() => {
     console.log('useViemAuctions useEffect triggered, publicClient:', !!publicClient);
     if (publicClient) {
@@ -216,11 +221,34 @@ export function useViemAuctions() {
     }
   }, [fetchAuctions]);
 
+  // Periodic polling for real-time updates
+  useEffect(() => {
+    if (!publicClient) return;
+
+    console.log('🔄 Setting up real-time auction polling...');
+    const pollInterval = setInterval(() => {
+      console.log('🔄 Polling for auction updates...');
+      fetchAuctions();
+    }, 15000); // Poll every 15 seconds
+
+    return () => {
+      console.log('🛑 Clearing auction polling interval');
+      clearInterval(pollInterval);
+    };
+  }, [publicClient, fetchAuctions]);
+
+  const refreshAuctions = useCallback(() => {
+    console.log('🔄 Manual auction refresh triggered');
+    fetchAuctions();
+  }, [fetchAuctions]);
+
   return {
     auctions,
     loading,
     error,
+    lastRefresh,
     fetchAuctions,
+    refreshAuctions,
     createAuction
   };
 }

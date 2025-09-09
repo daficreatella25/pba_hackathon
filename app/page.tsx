@@ -13,7 +13,7 @@ export default function Home() {
   const [currentView, setCurrentView] = useState<'rooms' | 'auction' | 'create'>('rooms');
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const { account } = useViemWeb3();
-  const { auctions, loading, error, createAuction } = useViemAuctions();
+  const { auctions, loading, error, lastRefresh, refreshAuctions, createAuction } = useViemAuctions();
 
   const enterRoom = (roomId: string) => {
     setSelectedRoom(roomId);
@@ -73,6 +73,8 @@ export default function Home() {
           onEnterRoom={enterRoom}
           onCreateRoom={goToCreateRoom}
           canCreate={!!account}
+          lastRefresh={lastRefresh}
+          onRefresh={refreshAuctions}
         />
       </div>
     );
