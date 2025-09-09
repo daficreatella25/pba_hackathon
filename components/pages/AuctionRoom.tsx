@@ -13,7 +13,7 @@ interface AuctionRoomProps {
 
 export default function AuctionRoom({ room, auctionAddress, onBack }: AuctionRoomProps) {
   const { account } = useViemWeb3();
-  const { auctionData, loading, error, placeBid } = useViemAuctionDetails(auctionAddress);
+  const { auctionData, loading, error, placeBid, finalizeAuction } = useViemAuctionDetails(auctionAddress);
 
   if (loading) {
     return (
@@ -56,6 +56,14 @@ export default function AuctionRoom({ room, auctionAddress, onBack }: AuctionRoo
       console.error('Failed to place bid:', err);
     }
   };
+
+  const handleFinalize = async () => {
+    try {
+      await finalizeAuction();
+    } catch (err) {
+      console.error('Failed to finalize auction:', err);
+    }
+  };
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
@@ -93,7 +101,9 @@ export default function AuctionRoom({ room, auctionAddress, onBack }: AuctionRoo
                 room={room} 
                 currentItem={auctionData} 
                 onPlaceBid={handlePlaceBid}
+                onFinalize={handleFinalize}
                 canBid={!!account}
+                userAccount={account}
               />
               {/* <BidHistory bids={auctionData.bids} /> */}
             </div>

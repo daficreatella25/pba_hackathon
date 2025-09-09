@@ -6,10 +6,12 @@ interface BiddingPanelProps {
   room: AuctionRoom;
   currentItem: AuctionItem;
   onPlaceBid: (amount: number) => void;
+  onFinalize?: () => void;
   canBid?: boolean;
+  userAccount?: string;
 }
 
-export default function BiddingPanel({ room, currentItem, onPlaceBid, canBid = true }: BiddingPanelProps) {
+export default function BiddingPanel({ room, currentItem, onPlaceBid, onFinalize, canBid = true, userAccount }: BiddingPanelProps) {
   const [newBid, setNewBid] = useState<string>('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -25,6 +27,12 @@ export default function BiddingPanel({ room, currentItem, onPlaceBid, canBid = t
     onPlaceBid(bidAmount);
     setNewBid('');
   };
+
+  const isWinningBidder = userAccount && currentItem.highestBidder !== 'None' && 
+    userAccount.toLowerCase() === currentItem.highestBidder.toLowerCase();
+  
+  const isAuctionEnded = room.status === 'ended';
+  const needsFinalization = isAuctionEnded && !currentItem.finalized;
 
   return (
     <div className="space-y-4">
@@ -52,7 +60,37 @@ export default function BiddingPanel({ room, currentItem, onPlaceBid, canBid = t
         </div>
       </div>
 
-      {canBid ? (
+      {needsFinalization && isWinningBidder ? (
+        <div className="space-y-3">
+          <h4 className="font-medium text-gray-900 dark:text-white">🎉 You Won!</h4>
+          <div className="bg-green-50 dark:bg-green-900 rounded-lg p-4">
+            <p className="text-green-800 dark:text-green-200 text-sm mb-3">
+              Congratulations! You are the highest bidder. Click below to finalize the auction and complete the payment to the seller.
+            </p>
+            <button
+              onClick={onFinalize}
+              className="w-full px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 font-medium"
+            >
+              Finalize Auction & Pay Seller
+            </button>
+          </div>
+        </div>
+      ) : needsFinalization ? (
+        <div className="bg-yellow-50 dark:bg-yellow-900 rounded-lg p-4">
+          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+            ⏳ Auction ended. Waiting for the winning bidder to finalize the payment.
+          </p>
+          <p className="text-yellow-700 dark:text-yellow-300 text-xs mt-1">
+            Winner: {currentItem.highestBidder.slice(0, 8)}...{currentItem.highestBidder.slice(-6)}
+          </p>
+        </div>
+      ) : currentItem.finalized ? (
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-center">
+          <p className="text-gray-600 dark:text-gray-300">
+            ✅ Auction completed and finalized
+          </p>
+        </div>
+      ) : canBid && !isAuctionEnded ? (
         <div className="space-y-3">
           <h4 className="font-medium text-gray-900 dark:text-white">Place Your Bid</h4>
           <form onSubmit={handleSubmit} className="flex gap-2">
@@ -74,10 +112,16 @@ export default function BiddingPanel({ room, currentItem, onPlaceBid, canBid = t
             </button>
           </form>
         </div>
-      ) : (
+      ) : !canBid ? (
         <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-center">
           <p className="text-gray-600 dark:text-gray-300">
             Connect your wallet to place bids
+          </p>
+        </div>
+      ) : (
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-center">
+          <p className="text-gray-600 dark:text-gray-300">
+            Auction has ended
           </p>
         </div>
       )}

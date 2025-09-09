@@ -52,10 +52,13 @@ export default function RoomCard({ room, onEnterRoom }: RoomCardProps) {
 
         <button
           onClick={() => onEnterRoom(room.id)}
-          disabled={room.status === 'ended'}
+          disabled={room.status === 'finalized'}
           className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
-          {room.status === 'live' ? 'Join Room' : room.status === 'upcoming' ? 'View Room' : 'Room Ended'}
+          {room.status === 'live' ? 'Join Room' : 
+           room.status === 'upcoming' ? 'View Room' : 
+           room.status === 'ended' ? 'Enter to Finalize' : 
+           'Auction Completed'}
         </button>
       </div>
     </div>
