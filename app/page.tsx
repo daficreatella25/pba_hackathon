@@ -2,17 +2,20 @@
 
 import { useState } from 'react';
 import { AuctionRoom, AuctionItem, CreateRoomForm } from '@/types/auction';
-import { dummyRooms, roomItems } from '@/data/dummyData';
+import { useAuctions } from '@/hooks/useAuctions';
+import { useWeb3 } from '@/contexts/Web3Context';
+import NetworkSelector from '@/components/NetworkSelector';
 import RoomsList from '@/components/pages/RoomsList';
 import CreateRoom from '@/components/pages/CreateRoom';
 import AuctionRoomPage from '@/components/pages/AuctionRoom';
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<'rooms' | 'auction' | 'create'>('rooms');
-  const [selectedRoom, setSelectedRoom] = useState<number | null>(null);
-  const [rooms, setRooms] = useState<AuctionRoom[]>(dummyRooms);
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+  const { isCorrectNetwork, account } = useWeb3();
+  const { auctions, loading, error, createAuction } = useAuctions();
 
-  const enterRoom = (roomId: number) => {
+  const enterRoom = (roomId: string) => {
     setSelectedRoom(roomId);
     setCurrentView('auction');
   };
@@ -30,112 +33,87 @@ export default function Home() {
     setCurrentView('rooms');
   };
 
-  const handleCreateRoom = (form: CreateRoomForm) => {
-    const startTime = new Date(form.startTime);
-    const endTime = new Date(form.endTime);
-    const now = new Date();
-
-    const newRoomId = Math.max(...rooms.map(r => r.id)) + 1;
-    const startBid = parseFloat(form.startBid);
-    const minimumIncrement = parseFloat(form.minimumIncrement);
-
-    const status: 'live' | 'upcoming' | 'ended' = 
-      startTime <= now && endTime > now ? 'live' :
-      startTime > now ? 'upcoming' : 'ended';
-
-    const newRoom: AuctionRoom = {
-      id: newRoomId,
-      name: form.name,
-      participants: 0,
-      status: status,
-      startTime: startTime,
-      endTime: endTime,
-      startBid: startBid,
-      minimumIncrement: minimumIncrement,
-      currentBid: startBid,
-      highestBidder: "None"
-    };
-
-    const newItem: AuctionItem = {
-      id: newRoomId * 10 + 1,
-      currentBid: startBid,
-      highestBidder: "None",
-      minimumIncrement: minimumIncrement,
-      bids: []
-    };
-
-    setRooms(prev => [...prev, newRoom]);
-    roomItems[newRoomId] = [newItem];
-    
-    alert('Auction room created successfully!');
-    exitCreateRoom();
-  };
-
-  const handlePlaceBid = (amount: number) => {
-    const currentItem = selectedRoom ? roomItems[selectedRoom]?.[0] : null;
-    
-    if (!currentItem || !selectedRoom) {
-      alert('Room not found');
+  const handleCreateRoom = async (form: CreateRoomForm) => {
+    if (!account || !isCorrectNetwork) {
+      alert('Please connect your wallet and switch to Paseo PassetHub network');
       return;
     }
 
-    if (roomItems[selectedRoom]) {
-      roomItems[selectedRoom][0] = {
-        ...currentItem,
-        currentBid: amount,
-        highestBidder: "You",
-        bids: [
-          { bidder: "You", amount: amount, timestamp: new Date() },
-          ...currentItem.bids
-        ]
-      };
-
-      setRooms(prevRooms =>
-        prevRooms.map(room =>
-          room.id === selectedRoom
-            ? { 
-                ...room, 
-                currentBid: amount, 
-                highestBidder: "You" 
-              }
-            : room
-        )
+    try {
+      const auctionAddress = await createAuction(
+        form.startBid,
+        form.startTime,
+        form.endTime,
+        form.minimumIncrement
       );
+      
+      if (auctionAddress) {
+        alert('Auction created successfully!');
+        exitCreateRoom();
+      } else {
+        alert('Failed to create auction - no address returned');
+      }
+    } catch (err) {
+      alert(`Failed to create auction: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
   if (currentView === 'rooms') {
     return (
-      <RoomsList 
-        rooms={rooms}
-        onEnterRoom={enterRoom}
-        onCreateRoom={goToCreateRoom}
-      />
+      <div>
+        <NetworkSelector />
+        {loading && (
+          <div className="text-center py-8">
+            <p className="text-gray-600 dark:text-gray-400">Loading auctions...</p>
+          </div>
+        )}
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-6">
+            <p className="text-red-800 dark:text-red-200">Error: {error}</p>
+          </div>
+        )}
+        <RoomsList 
+          rooms={auctions}
+          onEnterRoom={enterRoom}
+          onCreateRoom={goToCreateRoom}
+        />
+      </div>
     );
   }
 
   if (currentView === 'create') {
     return (
-      <CreateRoom 
-        onCreateRoom={handleCreateRoom}
-        onBack={exitCreateRoom}
-      />
+      <div>
+        <NetworkSelector />
+        <CreateRoom 
+          onCreateRoom={handleCreateRoom}
+          onBack={exitCreateRoom}
+        />
+      </div>
     );
   }
 
-  const room = rooms.find(r => r.id === selectedRoom);
-  const currentItem = selectedRoom ? roomItems[selectedRoom]?.[0] : null;
+  const room = auctions.find(r => r.id === selectedRoom);
 
-  if (room && currentItem) {
+  if (selectedRoom && room) {
     return (
-      <AuctionRoomPage 
-        room={room}
-        currentItem={currentItem}
-        onPlaceBid={handlePlaceBid}
-        onBack={exitRoom}
-      />
+      <div>
+        <NetworkSelector />
+        <AuctionRoomPage 
+          room={room}
+          auctionAddress={selectedRoom}
+          onBack={exitRoom}
+        />
+      </div>
     );
   }
 
-  return <div>Loading...</div>;
+  return (
+    <div>
+      <NetworkSelector />
+      <div className="text-center py-8">
+        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+      </div>
+    </div>
+  );
 }

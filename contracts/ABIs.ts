@@ -482,3 +482,16 @@ export const AuctionABI = [
 ];
 
 export const AUCTION_FACTORY_ADDRESS = "0xcc2390c7087b57cdd73514dcac9c25d0742fe7d3";
+
+// Paseo PassetHub Network Configuration
+export const PASEO_PASSETHUB_CONFIG = {
+  chainId: '0x190f1b46', // Correct chain ID from RPC
+  chainName: 'Paseo PassetHub',
+  rpcUrls: ['https://testnet-passet-hub-eth-rpc.polkadot.io'],
+  blockExplorerUrls: [], // Add block explorer if available
+  nativeCurrency: {
+    name: 'PAS',
+    symbol: 'PAS',
+    decimals: 18
+  }
+};

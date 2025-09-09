@@ -1,16 +1,59 @@
-import { AuctionRoom as AuctionRoomType, AuctionItem } from '@/types/auction';
+import { AuctionRoom as AuctionRoomType } from '@/types/auction';
 import { formatTimeRemaining } from '@/utils/time';
+import { useAuctionDetails } from '@/hooks/useAuctionDetails';
 import BiddingPanel from '@/components/BiddingPanel';
 import BidHistory from '@/components/BidHistory';
 
 interface AuctionRoomProps {
   room: AuctionRoomType;
-  currentItem: AuctionItem;
-  onPlaceBid: (amount: number) => void;
+  auctionAddress: string;
   onBack: () => void;
 }
 
-export default function AuctionRoom({ room, currentItem, onPlaceBid, onBack }: AuctionRoomProps) {
+export default function AuctionRoom({ room, auctionAddress, onBack }: AuctionRoomProps) {
+  const { auctionData, loading, error, placeBid } = useAuctionDetails(auctionAddress);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">Loading auction details...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <button
+            onClick={onBack}
+            className="flex items-center text-blue-600 hover:text-blue-700 mb-4"
+          >
+            ← Back to Rooms
+          </button>
+          <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4">
+            <p className="text-red-800 dark:text-red-200">Error: {error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!auctionData) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">Auction not found</p>
+      </div>
+    );
+  }
+
+  const handlePlaceBid = async (amount: number) => {
+    try {
+      await placeBid(amount.toString());
+    } catch (err) {
+      alert(`Failed to place bid: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+  };
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
@@ -46,10 +89,10 @@ export default function AuctionRoom({ room, currentItem, onPlaceBid, onBack }: A
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <BiddingPanel 
                 room={room} 
-                currentItem={currentItem} 
-                onPlaceBid={onPlaceBid}
+                currentItem={auctionData} 
+                onPlaceBid={handlePlaceBid}
               />
-              <BidHistory bids={currentItem.bids} />
+              <BidHistory bids={auctionData.bids} />
             </div>
           </div>
         </div>

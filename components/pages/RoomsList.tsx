@@ -3,7 +3,7 @@ import RoomCard from '@/components/RoomCard';
 
 interface RoomsListProps {
   rooms: AuctionRoom[];
-  onEnterRoom: (roomId: number) => void;
+  onEnterRoom: (roomId: string) => void;
   onCreateRoom: () => void;
 }
 

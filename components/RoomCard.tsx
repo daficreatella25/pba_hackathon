@@ -3,7 +3,7 @@ import { formatTimeRemaining } from '@/utils/time';
 
 interface RoomCardProps {
   room: AuctionRoom;
-  onEnterRoom: (roomId: number) => void;
+  onEnterRoom: (roomId: string) => void;
 }
 
 export default function RoomCard({ room, onEnterRoom }: RoomCardProps) {
