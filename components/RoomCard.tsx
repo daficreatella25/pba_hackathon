@@ -28,10 +28,10 @@ export default function RoomCard({ room, onEnterRoom }: RoomCardProps) {
         </h3>
         
         <div className="space-y-2 mb-4">
-          <div className="flex justify-between text-sm">
+          {/* <div className="flex justify-between text-sm">
             <span className="text-gray-500">Participants:</span>
             <span className="font-medium">{room.participants}</span>
-          </div>
+          </div> */}
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Start Bid:</span>
             <span className="font-medium">{room.startBid} PAS</span>

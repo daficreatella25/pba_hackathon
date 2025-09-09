@@ -78,9 +78,9 @@ export default function AuctionRoom({ room, auctionAddress, onBack }: AuctionRoo
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               {room.name}
             </h1>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              {room.participants} participants • {formatTimeRemaining(room.endTime)} remaining
-            </p>
+            {/* <p className="text-gray-600 dark:text-gray-300 mb-4">
+              {room.} participants • {formatTimeRemaining(room.endTime)} remaining
+            </p> */}
           </header>
         </div>
 
