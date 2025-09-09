@@ -33,7 +33,7 @@ export function useViemAuctions() {
       console.log('Raw auction addresses from contract:', auctionAddresses);
       const auctionData: AuctionRoom[] = [];
 
-      for (const address of auctionAddresses) {
+      for (const address of auctionAddresses as `0x${string}`[]) {
         try {
           // Fetch auction data in parallel using publicClient directly
           const [
@@ -77,10 +77,10 @@ export function useViemAuctions() {
             status,
             startTime: new Date(startTimeNum * 1000),
             endTime: new Date(endTimeNum * 1000),
-            startBid: parseFloat(formatEther(startPrice)),
-            minimumIncrement: parseFloat(formatEther(minIncrement)),
-            currentBid: parseFloat(formatEther(highestBid || startPrice)),
-            highestBidder: highestBidder !== '0x0000000000000000000000000000000000000000' ? highestBidder as string : 'None',
+            startBid: parseFloat(formatEther(startPrice as bigint)),
+            minimumIncrement: parseFloat(formatEther(minIncrement as bigint)),
+            currentBid: parseFloat(formatEther((highestBid ? highestBid : startPrice) as bigint)),
+            highestBidder: highestBidder !== '0x0000000000000000000000000000000000000000' ? (highestBidder as string) : 'None',
             finalized: finalized as boolean
           };
 
@@ -156,7 +156,8 @@ export function useViemAuctions() {
           endTimeUnix,
           parseEther(minIncrement)
         ],
-        account: account as `0x${string}`
+        account: account as `0x${string}`,
+        chain: undefined
       });
 
       // Wait for transaction receipt

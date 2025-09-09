@@ -103,7 +103,7 @@ export default function AuctionRoom({ room, auctionAddress, onBack }: AuctionRoo
                 onPlaceBid={handlePlaceBid}
                 onFinalize={handleFinalize}
                 canBid={!!account}
-                userAccount={account}
+                userAccount={account ?? undefined}
               />
               {/* <BidHistory bids={auctionData.bids} /> */}
             </div>
