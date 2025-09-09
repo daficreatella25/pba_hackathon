@@ -20,7 +20,7 @@ export default function BidHistory({ bids }: BidHistoryProps) {
                 <p className="font-medium text-gray-900 dark:text-white">{bid.bidder}</p>
                 <p className="text-sm text-gray-500">{bid.timestamp.toLocaleTimeString()}</p>
               </div>
-              <span className="font-bold text-green-600">{bid.amount} ETH</span>
+              <span className="font-bold text-green-600">{bid.amount} PAS</span>
             </div>
           ))}
           {bids.length === 0 && (

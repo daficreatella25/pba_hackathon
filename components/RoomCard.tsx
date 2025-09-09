@@ -34,15 +34,15 @@ export default function RoomCard({ room, onEnterRoom }: RoomCardProps) {
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Start Bid:</span>
-            <span className="font-medium">{room.startBid} ETH</span>
+            <span className="font-medium">{room.startBid} PAS</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Current Bid:</span>
-            <span className="font-medium text-green-600">{room.currentBid} ETH</span>
+            <span className="font-medium text-green-600">{room.currentBid} PAS</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Min Increment:</span>
-            <span className="font-medium">{room.minimumIncrement} ETH</span>
+            <span className="font-medium">{room.minimumIncrement} PAS</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Time Left:</span>

@@ -101,7 +101,7 @@ export default function CreateRoom({ onCreateRoom, onBack }: CreateRoomProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Starting Bid (ETH) *
+                  Starting Bid (PAS) *
                 </label>
                 <input
                   type="number"
@@ -117,7 +117,7 @@ export default function CreateRoom({ onCreateRoom, onBack }: CreateRoomProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Minimum Increment (ETH) *
+                  Minimum Increment (PAS) *
                 </label>
                 <input
                   type="number"

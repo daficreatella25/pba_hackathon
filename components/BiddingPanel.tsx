@@ -18,7 +18,7 @@ export default function BiddingPanel({ room, currentItem, onPlaceBid, canBid = t
     const minimumBid = currentItem.currentBid + currentItem.minimumIncrement;
     
     if (bidAmount < minimumBid) {
-      alert(`Bid must be at least ${minimumBid.toFixed(3)} ETH (current bid + minimum increment of ${currentItem.minimumIncrement} ETH)`);
+      alert(`Bid must be at least ${minimumBid.toFixed(3)} PAS (current bid + minimum increment of ${currentItem.minimumIncrement} PAS)`);
       return;
     }
 
@@ -32,15 +32,15 @@ export default function BiddingPanel({ room, currentItem, onPlaceBid, canBid = t
       <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-3">
         <div className="flex justify-between">
           <span className="text-gray-500">Start Bid:</span>
-          <span className="font-medium">{room.startBid} ETH</span>
+          <span className="font-medium">{room.startBid} PAS</span>
         </div>
         <div className="flex justify-between">
           <span className="text-gray-500">Current Bid:</span>
-          <span className="text-2xl font-bold text-green-600">{currentItem.currentBid} ETH</span>
+          <span className="text-2xl font-bold text-green-600">{currentItem.currentBid} PAS</span>
         </div>
         <div className="flex justify-between">
           <span className="text-gray-500">Minimum Increment:</span>
-          <span className="font-medium">{currentItem.minimumIncrement} ETH</span>
+          <span className="font-medium">{currentItem.minimumIncrement} PAS</span>
         </div>
         <div className="flex justify-between">
           <span className="text-gray-500">Highest Bidder:</span>
@@ -60,7 +60,7 @@ export default function BiddingPanel({ room, currentItem, onPlaceBid, canBid = t
               type="number"
               step="0.001"
               min={(currentItem.currentBid + currentItem.minimumIncrement)}
-              placeholder={`Min: ${(currentItem.currentBid + currentItem.minimumIncrement).toFixed(3)} ETH`}
+              placeholder={`Min: ${(currentItem.currentBid + currentItem.minimumIncrement).toFixed(3)} PAS`}
               value={newBid}
               onChange={(e) => setNewBid(e.target.value)}
               className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
