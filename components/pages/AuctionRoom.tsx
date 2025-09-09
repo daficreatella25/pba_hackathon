@@ -1,6 +1,7 @@
 import { AuctionRoom as AuctionRoomType } from '@/types/auction';
 import { formatTimeRemaining } from '@/utils/time';
 import { useViemAuctionDetails } from '@/hooks/useViemAuctionDetails';
+import { useViemWeb3 } from '@/contexts/ViemWeb3Context';
 import BiddingPanel from '@/components/BiddingPanel';
 import BidHistory from '@/components/BidHistory';
 
@@ -11,6 +12,7 @@ interface AuctionRoomProps {
 }
 
 export default function AuctionRoom({ room, auctionAddress, onBack }: AuctionRoomProps) {
+  const { account } = useViemWeb3();
   const { auctionData, loading, error, placeBid } = useViemAuctionDetails(auctionAddress);
 
   if (loading) {
@@ -51,7 +53,7 @@ export default function AuctionRoom({ room, auctionAddress, onBack }: AuctionRoo
     try {
       await placeBid(amount.toString());
     } catch (err) {
-      alert(`Failed to place bid: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      console.error('Failed to place bid:', err);
     }
   };
   return (
@@ -86,13 +88,14 @@ export default function AuctionRoom({ room, auctionAddress, onBack }: AuctionRoo
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-8">
               <BiddingPanel 
                 room={room} 
                 currentItem={auctionData} 
                 onPlaceBid={handlePlaceBid}
+                canBid={!!account}
               />
-              <BidHistory bids={auctionData.bids} />
+              {/* <BidHistory bids={auctionData.bids} /> */}
             </div>
           </div>
         </div>

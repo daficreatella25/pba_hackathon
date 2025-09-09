@@ -6,9 +6,10 @@ interface BiddingPanelProps {
   room: AuctionRoom;
   currentItem: AuctionItem;
   onPlaceBid: (amount: number) => void;
+  canBid?: boolean;
 }
 
-export default function BiddingPanel({ room, currentItem, onPlaceBid }: BiddingPanelProps) {
+export default function BiddingPanel({ room, currentItem, onPlaceBid, canBid = true }: BiddingPanelProps) {
   const [newBid, setNewBid] = useState<string>('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -51,27 +52,35 @@ export default function BiddingPanel({ room, currentItem, onPlaceBid }: BiddingP
         </div>
       </div>
 
-      <div className="space-y-3">
-        <h4 className="font-medium text-gray-900 dark:text-white">Place Your Bid</h4>
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <input
-            type="number"
-            step="0.001"
-            min={(currentItem.currentBid + currentItem.minimumIncrement)}
-            placeholder={`Min: ${(currentItem.currentBid + currentItem.minimumIncrement).toFixed(3)} ETH`}
-            value={newBid}
-            onChange={(e) => setNewBid(e.target.value)}
-            className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-            required
-          />
-          <button
-            type="submit"
-            className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-          >
-            Place Bid
-          </button>
-        </form>
-      </div>
+      {canBid ? (
+        <div className="space-y-3">
+          <h4 className="font-medium text-gray-900 dark:text-white">Place Your Bid</h4>
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <input
+              type="number"
+              step="0.001"
+              min={(currentItem.currentBid + currentItem.minimumIncrement)}
+              placeholder={`Min: ${(currentItem.currentBid + currentItem.minimumIncrement).toFixed(3)} ETH`}
+              value={newBid}
+              onChange={(e) => setNewBid(e.target.value)}
+              className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              required
+            />
+            <button
+              type="submit"
+              className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+            >
+              Place Bid
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-center">
+          <p className="text-gray-600 dark:text-gray-300">
+            Connect your wallet to place bids
+          </p>
+        </div>
+      )}
     </div>
   );
 }

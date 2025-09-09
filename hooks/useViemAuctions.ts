@@ -1,45 +1,40 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { formatEther, parseEther, getContract } from 'viem';
+import { formatEther, parseEther } from 'viem';
 import { useViemWeb3 } from '@/contexts/ViemWeb3Context';
 import { AuctionRoom } from '@/types/auction';
 import { AuctionFactoryABI, AuctionABI, AUCTION_FACTORY_ADDRESS } from '@/contracts/ABIs';
 
 export function useViemAuctions() {
-  const { publicClient, walletClient, account, isCorrectNetwork } = useViemWeb3();
+  const { publicClient, walletClient, account, switchToPaseoNetwork } = useViemWeb3();
   const [auctions, setAuctions] = useState<AuctionRoom[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchAuctions = useCallback(async () => {
-    if (!publicClient) return;
+    if (!publicClient) {
+      console.log('No publicClient available');
+      return;
+    }
 
     try {
       setLoading(true);
       setError(null);
+      console.log('Fetching auctions from factory:', AUCTION_FACTORY_ADDRESS);
 
-      // Create factory contract instance
-      const factoryContract = getContract({
+      // Get all auction addresses using publicClient directly
+      const auctionAddresses = await publicClient.readContract({
         address: AUCTION_FACTORY_ADDRESS as `0x${string}`,
         abi: AuctionFactoryABI,
-        client: publicClient
+        functionName: 'getAllAuctions',
       });
-
-      // Get all auction addresses
-      const auctionAddresses = await factoryContract.read.getAllAuctions();
+      console.log('Raw auction addresses from contract:', auctionAddresses);
       const auctionData: AuctionRoom[] = [];
 
       for (const address of auctionAddresses) {
         try {
-          // Create auction contract instance
-          const auctionContract = getContract({
-            address: address as `0x${string}`,
-            abi: AuctionABI,
-            client: publicClient
-          });
-
-          // Fetch auction data in parallel
+          // Fetch auction data in parallel using publicClient directly
           const [
             seller,
             startPrice,
@@ -50,14 +45,14 @@ export function useViemAuctions() {
             highestBid,
             finalized
           ] = await Promise.all([
-            auctionContract.read.seller(),
-            auctionContract.read.startPrice(),
-            auctionContract.read.minIncrement(),
-            auctionContract.read.startTime(),
-            auctionContract.read.endTime(),
-            auctionContract.read.highestBidder(),
-            auctionContract.read.highestBid(),
-            auctionContract.read.finalized()
+            publicClient.readContract({ address: address as `0x${string}`, abi: AuctionABI, functionName: 'seller' }),
+            publicClient.readContract({ address: address as `0x${string}`, abi: AuctionABI, functionName: 'startPrice' }),
+            publicClient.readContract({ address: address as `0x${string}`, abi: AuctionABI, functionName: 'minIncrement' }),
+            publicClient.readContract({ address: address as `0x${string}`, abi: AuctionABI, functionName: 'startTime' }),
+            publicClient.readContract({ address: address as `0x${string}`, abi: AuctionABI, functionName: 'endTime' }),
+            publicClient.readContract({ address: address as `0x${string}`, abi: AuctionABI, functionName: 'highestBidder' }),
+            publicClient.readContract({ address: address as `0x${string}`, abi: AuctionABI, functionName: 'highestBid' }),
+            publicClient.readContract({ address: address as `0x${string}`, abi: AuctionABI, functionName: 'finalized' })
           ]);
 
           const now = Math.floor(Date.now() / 1000);
@@ -94,8 +89,10 @@ export function useViemAuctions() {
         }
       }
 
+      console.log('Processed auction data:', auctionData);
       setAuctions(auctionData);
     } catch (err) {
+      console.error('Error fetching auctions:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch auctions');
     } finally {
       setLoading(false);
@@ -108,35 +105,62 @@ export function useViemAuctions() {
     endTime: string,
     minIncrement: string
   ): Promise<string | null> => {
-    if (!walletClient || !account || !isCorrectNetwork) {
-      throw new Error('Wallet not connected or wrong network');
+    if (!walletClient || !account) {
+      throw new Error('Wallet not connected');
     }
 
     try {
       const startTimeUnix = Math.floor(new Date(startTime).getTime() / 1000);
       const endTimeUnix = Math.floor(new Date(endTime).getTime() / 1000);
 
-      // Create factory contract instance with wallet client
-      const factoryContract = getContract({
-        address: AUCTION_FACTORY_ADDRESS as `0x${string}`,
-        abi: AuctionFactoryABI,
-        client: walletClient
+      console.log('Creating auction with params:', {
+        startPrice: parseEther(startPrice).toString(),
+        startTimeUnix,
+        endTimeUnix,
+        minIncrement: parseEther(minIncrement).toString(),
+        account
       });
 
-      // Call createAuction function
-      const hash = await factoryContract.write.createAuction(
-        [
+      // Try to estimate gas first
+      try {
+        if (!publicClient) throw new Error('Public client not available');
+        
+        const gasEstimate = await publicClient.estimateContractGas({
+          address: AUCTION_FACTORY_ADDRESS as `0x${string}`,
+          abi: AuctionFactoryABI,
+          functionName: 'createAuction',
+          args: [
+            parseEther(startPrice),
+            startTimeUnix,
+            endTimeUnix,
+            parseEther(minIncrement)
+          ],
+          account: account as `0x${string}`
+        });
+        
+        console.log('Gas estimate:', gasEstimate.toString());
+      } catch (gasError) {
+        console.warn('Gas estimation failed:', gasError);
+      }
+
+      // Call createAuction function using walletClient directly
+      const hash = await walletClient.writeContract({
+        address: AUCTION_FACTORY_ADDRESS as `0x${string}`,
+        abi: AuctionFactoryABI,
+        functionName: 'createAuction',
+        args: [
           parseEther(startPrice),
           startTimeUnix,
           endTimeUnix,
           parseEther(minIncrement)
         ],
-        {
-          account: account as `0x${string}`
-        }
-      );
+        account: account as `0x${string}`
+      });
 
       // Wait for transaction receipt
+      if (!publicClient) {
+        throw new Error('Public client not available');
+      }
       const receipt = await publicClient.waitForTransactionReceipt({ hash });
 
       // Parse logs to find the AuctionCreated event
@@ -154,16 +178,43 @@ export function useViemAuctions() {
 
       await fetchAuctions(); // Refresh anyway
       return null;
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Create auction error:', err);
+      
+      // Check for circuit breaker error
+      if (err.message?.includes('circuit breaker is open')) {
+        throw new Error('Network is currently congested. Please try again in a few minutes or increase gas fee.');
+      }
+      
+      // Check if it's a network mismatch error
+      if (err.message?.includes('does not match the target chain') || 
+          err.message?.includes('chain mismatch') ||
+          err.code === 4902) {
+        try {
+          console.log('Network mismatch detected, switching to Paseo PassetHub...');
+          await switchToPaseoNetwork();
+          // Retry auction creation after network switch
+          return await createAuction(startPrice, startTime, endTime, minIncrement);
+        } catch {
+          throw new Error('Please switch to Paseo PassetHub network to create auctions');
+        }
+      }
+      
+      // Check for gas estimation errors
+      if (err.message?.includes('gas') || err.message?.includes('out of gas')) {
+        throw new Error('Transaction may fail due to insufficient gas. Try increasing gas limit or fee.');
+      }
+      
       throw new Error(err instanceof Error ? err.message : 'Failed to create auction');
     }
   };
 
   useEffect(() => {
-    if (publicClient && isCorrectNetwork) {
+    console.log('useViemAuctions useEffect triggered, publicClient:', !!publicClient);
+    if (publicClient) {
       fetchAuctions();
     }
-  }, [fetchAuctions, isCorrectNetwork]);
+  }, [fetchAuctions]);
 
   return {
     auctions,

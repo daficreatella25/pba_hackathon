@@ -6,12 +6,10 @@ import {
   createPublicClient, 
   custom, 
   http, 
-  getContract,
-  formatEther,
-  parseEther,
-  Chain
+  Chain,
+  PublicClient,
+  WalletClient
 } from 'viem';
-import { AuctionFactoryABI, AuctionABI, AUCTION_FACTORY_ADDRESS } from '@/contracts/ABIs';
 
 // Define Paseo PassetHub chain
 const paseoPassetHub: Chain = {
@@ -35,8 +33,8 @@ const paseoPassetHub: Chain = {
 
 interface ViemWeb3ContextType {
   account: `0x${string}` | null;
-  walletClient: any | null;
-  publicClient: any | null;
+  walletClient: WalletClient | null;
+  publicClient: PublicClient | null;
   isConnecting: boolean;
   error: string | null;
   isCorrectNetwork: boolean;
@@ -53,11 +51,25 @@ interface ViemWeb3ProviderProps {
 
 export function ViemWeb3Provider({ children }: ViemWeb3ProviderProps) {
   const [account, setAccount] = useState<`0x${string}` | null>(null);
-  const [walletClient, setWalletClient] = useState<any | null>(null);
-  const [publicClient, setPublicClient] = useState<any | null>(null);
+  const [walletClient, setWalletClient] = useState<WalletClient | null>(null);
+  const [publicClient, setPublicClient] = useState<PublicClient | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCorrectNetwork, setIsCorrectNetwork] = useState(false);
+
+  // Initialize public client immediately for reading contract data
+  useEffect(() => {
+    const initPublicClient = () => {
+      const client = createPublicClient({
+        chain: paseoPassetHub,
+        transport: http()
+      });
+      setPublicClient(client);
+      console.log('Public client initialized for reading contracts');
+    };
+
+    initPublicClient();
+  }, []);
 
   const connectWallet = async () => {
     try {
@@ -83,15 +95,7 @@ export function ViemWeb3Provider({ children }: ViemWeb3ProviderProps) {
       
       setIsCorrectNetwork(isCorrect);
 
-      if (isCorrect) {
-        // Create public client for reading
-        const publicClient = createPublicClient({
-          chain: paseoPassetHub,
-          transport: http()
-        });
-
-        setPublicClient(publicClient);
-      }
+      // Public client is already initialized in useEffect
 
       setAccount(address);
       setWalletClient(wallet);
@@ -211,6 +215,10 @@ export function useViemWeb3() {
 // Extend Window interface for TypeScript
 declare global {
   interface Window {
-    ethereum?: any;
+    ethereum?: {
+      request: (params: { method: string; params?: any[] }) => Promise<any>;
+      on: (eventName: string, handler: (...args: any[]) => void) => void;
+      removeListener: (eventName: string, handler: (...args: any[]) => void) => void;
+    };
   }
 }

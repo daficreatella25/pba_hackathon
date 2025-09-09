@@ -7,7 +7,7 @@ import { AuctionItem } from '@/types/auction';
 import { AuctionABI } from '@/contracts/ABIs';
 
 export function useViemAuctionDetails(auctionAddress: string) {
-  const { publicClient, walletClient, account, isCorrectNetwork } = useViemWeb3();
+  const { publicClient, walletClient, account, switchToPaseoNetwork } = useViemWeb3();
   const [auctionData, setAuctionData] = useState<AuctionItem | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,13 +19,7 @@ export function useViemAuctionDetails(auctionAddress: string) {
       setLoading(true);
       setError(null);
 
-      // Create auction contract instance
-      const auctionContract = getContract({
-        address: auctionAddress as `0x${string}`,
-        abi: AuctionABI,
-        client: publicClient
-      });
-
+      // Fetch auction details using publicClient directly
       const [
         highestBid,
         highestBidder,
@@ -34,12 +28,12 @@ export function useViemAuctionDetails(auctionAddress: string) {
         timeLeft,
         finalized
       ] = await Promise.all([
-        auctionContract.read.highestBid(),
-        auctionContract.read.highestBidder(),
-        auctionContract.read.minIncrement(),
-        auctionContract.read.minNextBid(),
-        auctionContract.read.timeLeft(),
-        auctionContract.read.finalized()
+        publicClient.readContract({ address: auctionAddress as `0x${string}`, abi: AuctionABI, functionName: 'highestBid' }),
+        publicClient.readContract({ address: auctionAddress as `0x${string}`, abi: AuctionABI, functionName: 'highestBidder' }),
+        publicClient.readContract({ address: auctionAddress as `0x${string}`, abi: AuctionABI, functionName: 'minIncrement' }),
+        publicClient.readContract({ address: auctionAddress as `0x${string}`, abi: AuctionABI, functionName: 'minNextBid' }),
+        publicClient.readContract({ address: auctionAddress as `0x${string}`, abi: AuctionABI, functionName: 'timeLeft' }),
+        publicClient.readContract({ address: auctionAddress as `0x${string}`, abi: AuctionABI, functionName: 'finalized' })
       ]);
 
       // Get bid events (simplified - you might want to implement proper event filtering)
@@ -70,26 +64,19 @@ export function useViemAuctionDetails(auctionAddress: string) {
   }, [publicClient, auctionAddress]);
 
   const placeBid = async (bidAmount: string): Promise<boolean> => {
-    if (!account || !walletClient || !isCorrectNetwork) {
-      throw new Error('Wallet not connected or wrong network');
+    if (!account || !walletClient) {
+      throw new Error('Wallet not connected');
     }
 
     try {
-      // Create auction contract instance with wallet client
-      const auctionContract = getContract({
+      // Place bid using walletClient directly
+      const hash = await walletClient.writeContract({
         address: auctionAddress as `0x${string}`,
         abi: AuctionABI,
-        client: walletClient
+        functionName: 'bid',
+        account: account as `0x${string}`,
+        value: parseEther(bidAmount)
       });
-
-      // Place bid
-      const hash = await auctionContract.write.bid(
-        [],
-        {
-          account: account as `0x${string}`,
-          value: parseEther(bidAmount)
-        }
-      );
 
       // Wait for confirmation
       await publicClient.waitForTransactionReceipt({ hash });
@@ -97,31 +84,37 @@ export function useViemAuctionDetails(auctionAddress: string) {
       // Refresh auction data
       await fetchAuctionDetails();
       return true;
-    } catch (err) {
+    } catch (err: any) {
+      // Check if it's a network mismatch error
+      if (err.message?.includes('does not match the target chain') || 
+          err.message?.includes('chain mismatch') ||
+          err.code === 4902) {
+        try {
+          console.log('Network mismatch detected, switching to Paseo PassetHub...');
+          await switchToPaseoNetwork();
+          // Retry the bid after network switch
+          return await placeBid(bidAmount);
+        } catch (switchError) {
+          throw new Error('Please switch to Paseo PassetHub network to place bids');
+        }
+      }
       throw new Error(err instanceof Error ? err.message : 'Failed to place bid');
     }
   };
 
   const finalizeAuction = async (): Promise<boolean> => {
-    if (!account || !walletClient || !isCorrectNetwork) {
-      throw new Error('Wallet not connected or wrong network');
+    if (!account || !walletClient) {
+      throw new Error('Wallet not connected');
     }
 
     try {
-      // Create auction contract instance with wallet client
-      const auctionContract = getContract({
+      // Finalize auction using walletClient directly
+      const hash = await walletClient.writeContract({
         address: auctionAddress as `0x${string}`,
         abi: AuctionABI,
-        client: walletClient
+        functionName: 'finalize',
+        account: account as `0x${string}`
       });
-
-      // Finalize auction
-      const hash = await auctionContract.write.finalize(
-        [],
-        {
-          account: account as `0x${string}`
-        }
-      );
       
       // Wait for confirmation
       await publicClient.waitForTransactionReceipt({ hash });

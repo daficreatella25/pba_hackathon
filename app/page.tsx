@@ -12,7 +12,7 @@ import AuctionRoomPage from '@/components/pages/AuctionRoom';
 export default function Home() {
   const [currentView, setCurrentView] = useState<'rooms' | 'auction' | 'create'>('rooms');
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
-  const { isCorrectNetwork, account } = useViemWeb3();
+  const { account } = useViemWeb3();
   const { auctions, loading, error, createAuction } = useViemAuctions();
 
   const enterRoom = (roomId: string) => {
@@ -34,8 +34,7 @@ export default function Home() {
   };
 
   const handleCreateRoom = async (form: CreateRoomForm) => {
-    if (!account || !isCorrectNetwork) {
-      alert('Please connect your wallet and switch to Paseo PassetHub network');
+    if (!account) {
       return;
     }
 
@@ -48,13 +47,10 @@ export default function Home() {
       );
       
       if (auctionAddress) {
-        alert('Auction created successfully!');
         exitCreateRoom();
-      } else {
-        alert('Failed to create auction - no address returned');
       }
     } catch (err) {
-      alert(`Failed to create auction: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      console.error('Failed to create auction:', err);
     }
   };
 
@@ -62,21 +58,6 @@ export default function Home() {
     return (
       <div>
         <NetworkSelector />
-        <div className="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-800 dark:text-green-200 text-sm">
-                ⚡ Powered by <strong>Viem</strong> - Modern Web3 library with superior TypeScript support
-              </p>
-            </div>
-            <a 
-              href="/ethers-page"
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 font-medium text-sm"
-            >
-              Try Ethers Version
-            </a>
-          </div>
-        </div>
         {loading && (
           <div className="text-center py-8">
             <p className="text-gray-600 dark:text-gray-400">Loading auctions...</p>
@@ -91,6 +72,7 @@ export default function Home() {
           rooms={auctions}
           onEnterRoom={enterRoom}
           onCreateRoom={goToCreateRoom}
+          canCreate={!!account}
         />
       </div>
     );
