@@ -1,11 +1,12 @@
 'use client';
 
-import { useViemWeb3 } from '@/contexts/ViemWeb3Context';
+import { useWeb3 } from '@/contexts/Web3Context';
+import { PASEO_PASSETHUB_CONFIG } from '@/contracts/ABIs';
 
 export default function NetworkSelector() {
-  const { account, isCorrectNetwork, switchToPaseoNetwork, connectWallet, error } = useViemWeb3();
+  const { account, chainId, isCorrectNetwork, switchToPaseoNetwork, connectWallet, error } = useWeb3();
 
-  // console.log(account)
+  console.log(account, chainId)
 
   if (!account) {
     return (
@@ -44,6 +45,9 @@ export default function NetworkSelector() {
             <p className="text-sm text-red-700 dark:text-red-300 mt-1">
               Please switch to Paseo PassetHub network to use this application
             </p>
+            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+              Current: {chainId} | Required: {PASEO_PASSETHUB_CONFIG.chainId}
+            </p>
           </div>
           <button
             onClick={switchToPaseoNetwork}
@@ -69,7 +73,7 @@ export default function NetworkSelector() {
         </div>
         <div className="flex items-center space-x-2">
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
-            PAS
+            {PASEO_PASSETHUB_CONFIG.nativeCurrency.symbol}
           </span>
           <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
         </div>

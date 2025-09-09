@@ -1,6 +1,6 @@
 import { AuctionRoom as AuctionRoomType } from '@/types/auction';
 import { formatTimeRemaining } from '@/utils/time';
-import { useAuctionDetails } from '@/hooks/useAuctionDetails';
+import { useViemAuctionDetails } from '@/hooks/useViemAuctionDetails';
 import BiddingPanel from '@/components/BiddingPanel';
 import BidHistory from '@/components/BidHistory';
 
@@ -11,7 +11,7 @@ interface AuctionRoomProps {
 }
 
 export default function AuctionRoom({ room, auctionAddress, onBack }: AuctionRoomProps) {
-  const { auctionData, loading, error, placeBid } = useAuctionDetails(auctionAddress);
+  const { auctionData, loading, error, placeBid } = useViemAuctionDetails(auctionAddress);
 
   if (loading) {
     return (

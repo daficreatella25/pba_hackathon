@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Web3Provider } from "@/contexts/Web3Context";
+import { ViemWeb3Provider } from "@/contexts/ViemWeb3Context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,9 +28,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Web3Provider>
+        <ViemWeb3Provider>
           {children}
-        </Web3Provider>
+        </ViemWeb3Provider>
       </body>
     </html>
   );

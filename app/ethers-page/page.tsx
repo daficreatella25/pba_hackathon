@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { CreateRoomForm } from '@/types/auction';
-import { useViemAuctions } from '@/hooks/useViemAuctions';
-import { useViemWeb3 } from '@/contexts/ViemWeb3Context';
-import NetworkSelector from '@/components/NetworkSelector';
+import { AuctionRoom, AuctionItem, CreateRoomForm } from '@/types/auction';
+import { useAuctions } from '@/hooks/useAuctions';
+import { useWeb3 } from '@/contexts/Web3Context';
+import EthersNetworkSelector from '@/components/EthersNetworkSelector';
 import RoomsList from '@/components/pages/RoomsList';
 import CreateRoom from '@/components/pages/CreateRoom';
 import AuctionRoomPage from '@/components/pages/AuctionRoom';
@@ -12,8 +12,8 @@ import AuctionRoomPage from '@/components/pages/AuctionRoom';
 export default function Home() {
   const [currentView, setCurrentView] = useState<'rooms' | 'auction' | 'create'>('rooms');
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
-  const { isCorrectNetwork, account } = useViemWeb3();
-  const { auctions, loading, error, createAuction } = useViemAuctions();
+  const { isCorrectNetwork, account } = useWeb3();
+  const { auctions, loading, error, createAuction } = useAuctions();
 
   const enterRoom = (roomId: string) => {
     setSelectedRoom(roomId);
@@ -61,19 +61,19 @@ export default function Home() {
   if (currentView === 'rooms') {
     return (
       <div>
-        <NetworkSelector />
-        <div className="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg p-4 mb-6">
+        <EthersNetworkSelector />
+        <div className="bg-purple-50 dark:bg-purple-900 border border-purple-200 dark:border-purple-700 rounded-lg p-4 mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-green-800 dark:text-green-200 text-sm">
-                ⚡ Powered by <strong>Viem</strong> - Modern Web3 library with superior TypeScript support
+              <p className="text-purple-800 dark:text-purple-200 text-sm">
+                📚 This page uses <strong>Ethers.js</strong> for Web3 interactions
               </p>
             </div>
             <a 
-              href="/ethers-page"
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 font-medium text-sm"
+              href="/viem-page"
+              className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium text-sm"
             >
-              Try Ethers Version
+              Try Viem Version
             </a>
           </div>
         </div>
@@ -99,7 +99,7 @@ export default function Home() {
   if (currentView === 'create') {
     return (
       <div>
-        <NetworkSelector />
+        <EthersNetworkSelector />
         <CreateRoom 
           onCreateRoom={handleCreateRoom}
           onBack={exitCreateRoom}
@@ -113,7 +113,7 @@ export default function Home() {
   if (selectedRoom && room) {
     return (
       <div>
-        <NetworkSelector />
+        <EthersNetworkSelector />
         <AuctionRoomPage 
           room={room}
           auctionAddress={selectedRoom}
